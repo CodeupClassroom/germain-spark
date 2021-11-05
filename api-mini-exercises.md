@@ -18,22 +18,67 @@ pandas_dataframe = pd.DataFrame({
 1. Spark Dataframe Basics
 
     1. Use the starter code above to create a pandas dataframe.
+
     1. Convert the pandas dataframe to a spark dataframe. From this point
        forward, do all of your work with the spark dataframe, not the pandas
        dataframe.
+
+        ```python
+        df = spark.createDataFrame(pandas_dataframe)
+        ```
+
     1. Show the first 3 rows of the dataframe.
+
+        ```python
+        df.show(3)
+        ```
+
     1. Show the first 7 rows of the dataframe.
+
+        ```python
+        df.show(7)
+        ```
+
     1. View a summary of the data using `.describe`.
+
+        ```
+        df.describe().show()
+        ```
+
+        Note that `.describe` returns another dataframe, so we still have to do
+        `.show` at the end.
+
     1. Use `.select` to create a new dataframe with just the `n` and `abool`
        columns. View the first 5 rows of this dataframe.
+
+        ```python
+        df.select('n', 'abool').show(5)
+        ```
+
     1. Use `.select` to create a new dataframe with just the `group` and `abool`
        columns. View the first 5 rows of this dataframe.
+
+        ```python
+        df.select('group', 'abool').show(5)
+        ```
+
     1. Use `.select` to create a new dataframe with the `group` column and the
        `abool` column renamed to `a_boolean_value`. Show the first 3 rows of
        this dataframe.
+
+        ```python
+        df.select('group', df.abool.alias('a_boolean_value')).show(3)
+        ```
+
     1. Use `.select` to create a new dataframe with the `group` column and the
        `n` column renamed to `a_numeric_value`. Show the first 6 rows of this
        dataframe.
+
+        ```python
+        from pyspark.sql.functions import col
+
+        df.select('group', col('n').alias('a_numeric_value')).show(6)
+        ```
 
 1. Column Manipulation
 
@@ -42,17 +87,39 @@ pandas_dataframe = pd.DataFrame({
 
     1. Use `.select` to add 4 to the `n` column. Show the results.
 
+        ```python
+        df.select('n', df.n + 4).show()
+        ```
+
     1. Subtract 5 from the `n` column and view the results.
+
+        ```python
+        df.select('n', df.n - 5).show()
+        ```
 
     1. Multiply the `n` column by 2. View the results along with the original
        numbers.
+
+        ```python
+        df.select('n', df.n * 5).show()
+        ```
 
     1. Add a new column named `n2` that is the `n` value multiplied by -1. Show
        the first 4 rows of your dataframe. You should see the original `n` value
        as well as `n2`.
 
+        ```python
+        df = df.select('*', (df.n * -1).alias('n2'))
+        df.show(4)
+        ```
+
     1. Add a new column named `n3` that is the n value squared. Show the first 5
        rows of your dataframe. You should see both `n`, `n2`, and `n3`.
+
+        ```python
+        df = df.select('*', (df.n * df.n).alias('n3'))
+        df.show(5)
+        ```
 
     1. What happens when you run the code below?
 
@@ -60,12 +127,20 @@ pandas_dataframe = pd.DataFrame({
         df.group + df.abool
         ```
 
+        A `Column` object is produced that represents the transformation of
+        adding together the `group` and `abool` columns.
+
     1. What happens when you run the code below? What is the difference between
        this and the previous code sample?
 
         ```python
         df.select(df.group + df.abool)
         ```
+
+        An error is produced referencing the incompatible types. Unlike the
+        previous code sample, this one is done within the context of a
+        `.select`, so even though there are still no values produced (we haven't
+        invoked an action yet), spark is aware that the types are incompatible.
 
     1. Try adding various other columns together. What are the results of
        combining the different data types?
@@ -76,7 +151,15 @@ pandas_dataframe = pd.DataFrame({
 
     1. Use `.printSchema` to view the datatypes in your dataframe.
 
+        ```python
+        df.printSchema()
+        ```
+
     1. Use `.dtypes` to view the datatypes in your dataframe.
+
+        ```python
+        df.dtypes
+        ```
 
     1. What is the difference between the two code samples below?
 
@@ -88,58 +171,178 @@ pandas_dataframe = pd.DataFrame({
         df.select(df.abool.cast('int')).show()
         ```
 
+        One is a creating a `Column` and one is using that same column in a
+        `.select` in order to view the results of the cast.
+
     1. Use `.select` and `.cast` to convert the `abool` column to an integer
        type. View the results.
+
+        ```python
+        df.select('abool', df.abool.cast('int')).show()
+        ```
+
     1. Convert the `group` column to a integer data type and view the results.
        What happens?
+
+        ```python
+        df.select('group', df.group.cast('int')).show()
+        ```
+
+        The values are converted to nulls.
+
     1. Convert the `n` column to a integer data type and view the results. What
        happens?
+
+        ```python
+        df.select('n', df.n.cast('int')).show()
+        ```
+
     1. Convert the `abool` column to a string data type and view the results.
        What happens?
+
+        ```python
+        df.select('abool', df.abool.cast('string')).show()
+        ```
 
 1. Built-in Functions
 
     1. Use the starter code above to re-create a spark dataframe.
     1. Import the necessary functions from `pyspark.sql.functions`
+
+        ```python
+        from pyspark.sql.functions import min, max, mean, lit, concat
+        ```
+
     1. Find the highest `n` value.
     1. Find the lowest `n` value.
     1. Find the average `n` value.
+
+        ```python
+        df.select(max('n'), min('n'), mean('n')).show()
+        ```
+
     1. Use `concat` to change the `group` column to say, e.g. "Group: x" or
        "Group: y"
+
+        ```python
+        df.select(concat(lit('Group: '), 'group'))
+        ```
+
     1. Use `concat` to combine the `n` and `group` columns to produce results
        that look like this: "x: -1.432" or "z: 2.352"
+
+        ```python
+        df.select(concat('group', lit(': '), 'n')).show()
+        ```
 
 1. When / Otherwise
 
     1. Use the starter code above to re-create a spark dataframe.
     1. Use `when` and `.otherwise` to create a column that contains the text "It
        is true" when `abool` is true and "It is false"" when `abool` is false.
+
+        ```python
+        df.select(when(df.abool, 'It is true').otherwise('It is false')).show()
+        ```
+
     1. Create a column that contains 0 if n is less than 0, otherwise, the
        original n value.
+
+        df.select('n', when(df.n < 0, 0).otherwise(df.n)).show()
 
 1. Filter / Where
 
     1. Use the starter code above to re-create a spark dataframe.
     1. Use `.filter` or `.where` to select just the rows where the group is `y`
        and view the results.
+
+        ```python
+        df.filter(df.group == 'y').show()
+        ```
+
     1. Select just the columns where the `abool` column is false and view the
        results.
+
+        ```python
+        df.filter(~ df.abool).show()
+        ```
+
     1. Find the columns where the `group` column is *not* `y`.
+
+        ```python
+        df.filter(df.group != 'y').show()
+        ```
+
     1. Find the columns where `n` is positive.
+
+        ```python
+        df.filter(df.n > 0).show()
+        ```
+
     1. Find the columns where `abool` is true and the `group` column is `z`.
+
+        ```python
+        df.filter(df.abool & (df.group == 'z')).show()
+        ```
+
     1. Find the columns where `abool` is true or the `group` column is `z`.
+
+        ```python
+        df.filter(df.abool | (df.group == 'z')).show()
+        ```
+
     1. Find the columns where `abool` is false and `n` is less than 1
+
+        ```python
+        df.filter(~ df.abool & (df.n < 1)).show()
+        ```
+
     1. Find the columns where `abool` is false or `n` is less than 1
+
+        ```python
+        df.filter(~ df.abool | (df.n < 1)).show()
+        ```
 
 1. Sorting
 
     1. Use the starter code above to re-create a spark dataframe.
     1. Sort by the `n` value.
+
+        ```python
+        df.sort('n').show()
+        ```
+
     1. Sort by the `group` value, both ascending and descending.
+
+        ```python
+        from pyspark.sql.functions import asc, desc
+        ```
+
+        ```python
+        df.sort(asc('group')).show()
+        ```
+
+        ```python
+        df.sort(desc('group')).show()
+        ```
+
     1. Sort by the group value first, then, within each group, sort by `n`
        value.
+
+        ```python
+        df.sort('group', 'n').show()
+        ```
+
     1. Sort by `abool`, `group`, and `n`. Does it matter in what order you
        specify the columns when sorting?
+
+        ```python
+        df.sort('abool', 'group', 'n').show()
+        ```
+
+        It does matter as it determines in what order they will be sorted. When
+        the values for the first specified column are the same, the next
+        specified column will determine sort order.
 
 1. Spark SQL
 
