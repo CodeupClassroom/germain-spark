@@ -1,3 +1,4 @@
 .ipynb_checkpoints
 *.csv
 mpg_*/
+__pycache__/
